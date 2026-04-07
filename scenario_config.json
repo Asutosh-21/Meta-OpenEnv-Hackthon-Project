@@ -1,8 +1,8 @@
 {
   "llm_api_key": "",
-  "llm_model": "gpt-4.1-mini",
+  "llm_model": "Qwen/Qwen2.5-72B-Instruct",
   "llm_provider": "openai",
-  "api_base_url": "https://api.openai.com/v1",
+  "api_base_url": "https://router.huggingface.co/v1",
   "env_base_url": "http://localhost:7860",
   "tasks": [
     {
