@@ -10,12 +10,12 @@ MAX_STEPS = {"alert-triage": 3, "root-cause": 5, "full-incident-response": 8}
 
 
 class IncidentResponseEnv:
-    def __init__(self, task_type: str = "alert-triage", seed: Optional[int] = 42):
+    def __init__(self, task_type: str = "alert-triage", seed: Optional[int] = None):
         if task_type not in TASK_TYPES:
             raise ValueError(f"task_type must be one of {TASK_TYPES}")
         self.task_type = task_type
         self.seed = seed
-        self._rng = random.Random(seed)
+        self._rng = random.Random(seed)  # None = truly random
         self._incident: Optional[Dict[str, Any]] = None
         self._step_num: int = 0
         self._done: bool = False
@@ -102,8 +102,7 @@ class IncidentResponseEnv:
 
         elif self.task_type == "root-cause":
             score, _, _ = grade_root_cause(action_dict, gt)
-            # partial reward each step, done when agent says so or max steps
-            done = action_dict.get("action_type") == "investigate" and score >= 0.7
+            done = action_dict.get("action_type") == "investigate"
             return score, done
 
         else:  # full-incident-response

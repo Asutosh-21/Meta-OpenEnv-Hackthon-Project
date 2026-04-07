@@ -133,8 +133,8 @@ docker run -p 7860:7860 incident-response-openenv
 
 ```bash
 export HF_TOKEN=your_token
-export API_BASE_URL=https://api.openai.com/v1
-export MODEL_NAME=gpt-4.1-mini
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 export ENV_BASE_URL=http://localhost:7860
 python inference.py
 ```
@@ -147,9 +147,9 @@ Scores produced by `gpt-4.1-mini` with `temperature=0.2`:
 
 | Task | Score | Notes |
 |------|-------|-------|
-| `alert-triage` | ~0.85 | Strong on obvious P1s, partial on P3 |
-| `root-cause` | ~0.62 | Good correlation, weaker on explanation |
-| `full-incident-response` | ~0.48 | Multi-step reasoning is genuinely hard |
+| `alert-triage` | ~1.00 | Perfect severity + service classification |
+| `root-cause` | ~0.45 | Good alert correlation, partial root cause overlap |
+| `full-incident-response` | ~0.30 | Multi-step reasoning is genuinely hard, runbook adherence challenging |
 
 ---
 
@@ -177,6 +177,6 @@ Scores produced by `gpt-4.1-mini` with `temperature=0.2`:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `HF_TOKEN` | Yes | — | Hugging Face / OpenAI API key |
-| `API_BASE_URL` | No | `https://api.openai.com/v1` | LLM API endpoint |
-| `MODEL_NAME` | No | `gpt-4.1-mini` | Model identifier |
+| `API_BASE_URL` | No | `https://router.huggingface.co/v1` | LLM API endpoint |
+| `MODEL_NAME` | No | `Qwen/Qwen2.5-72B-Instruct` | Model identifier |
 | `ENV_BASE_URL` | No | `http://localhost:7860` | Environment server URL |

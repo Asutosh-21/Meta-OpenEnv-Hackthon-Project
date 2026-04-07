@@ -25,7 +25,7 @@ def _get_env(task_type: str) -> IncidentResponseEnv:
 
 class ResetRequest(BaseModel):
     task_type: Optional[str] = "alert-triage"
-    seed: Optional[int] = 42
+    seed: Optional[int] = None  # None = random episode each reset
 
 
 class StepRequest(BaseModel):

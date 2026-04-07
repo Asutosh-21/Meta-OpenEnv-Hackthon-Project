@@ -83,14 +83,18 @@ def grade_full_incident_response(
     if not actions:
         return 0.0, {}, "No actions taken"
 
-    last = actions[-1]
+    # scan all actions for best severity and root_cause
+    best_sev = ""
+    best_rc = ""
+    for a in actions:
+        if a.get("severity"):
+            best_sev = a["severity"]
+        if a.get("root_cause"):
+            best_rc = a["root_cause"]
 
-    sev_score = _severity_score(
-        (last.get("severity") or "").upper(),
-        ground_truth["severity"]
-    ) * 0.15
+    sev_score = _severity_score(best_sev.upper(), ground_truth["severity"]) * 0.15
 
-    pred_rc = (last.get("root_cause") or "").lower().replace(" ", "_")
+    pred_rc = best_rc.lower().replace(" ", "_")
     true_rc = ground_truth["root_cause"].lower()
     rc_keywords = set(true_rc.replace("_", " ").split())
     pred_keywords = set(pred_rc.replace("_", " ").split())
