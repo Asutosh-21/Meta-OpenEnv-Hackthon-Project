@@ -7,6 +7,9 @@ from .tasks import grade_alert_triage, grade_root_cause, grade_full_incident_res
 
 TASK_TYPES = ["alert-triage", "root-cause", "full-incident-response"]
 MAX_STEPS = {"alert-triage": 3, "root-cause": 5, "full-incident-response": 8}
+VALID_ACTIONS = {"alert-triage": ["classify"], "root-cause": ["investigate"], "full-incident-response": ["classify", "investigate", "remediate", "verify", "postmortem"]}
+
+
 
 
 class IncidentResponseEnv:
@@ -38,6 +41,19 @@ class IncidentResponseEnv:
         self._step_num += 1
         action_dict = action.model_dump()
         self._actions_taken.append(action_dict)
+
+        # penalise invalid action_type
+        valid = VALID_ACTIONS.get(self.task_type, [])
+        if action_dict.get("action_type") not in valid:
+            self._rewards.append(0.0)
+            max_s = MAX_STEPS[self.task_type]
+            done = self._step_num >= max_s
+            self._done = done
+            obs = self._make_observation()
+            return StepResult(observation=obs, reward=0.0, done=done,
+                              info={"step": self._step_num, "max_steps": max_s,
+                                    "incident_id": self._incident["incident_id"],
+                                    "cumulative_reward": 0.0, "error": "invalid action_type"})
 
         reward, done = self._compute_reward(action_dict)
         self._rewards.append(reward)

@@ -98,6 +98,7 @@ Rewards are shaped across the full trajectory — not sparse end-of-episode sign
 - **F1 scoring** for alert correlation (precision + recall)
 - **Efficiency penalty** in Task 3 — fewer steps = higher reward
 - **Remediation penalty** — empty remediation steps penalised
+- **Wrong action penalty** — invalid action_type returns 0.0 reward
 
 ---
 
@@ -110,6 +111,25 @@ Rewards are shaped across the full trajectory — not sparse end-of-episode sign
 | GET | `/state` | Current episode state |
 | GET | `/tasks` | List all tasks |
 | GET | `/health` | Health check |
+
+---
+
+## Quick Demo
+
+```bash
+# 1. Start an episode
+curl -X POST https://asuml21-incident-response-openenv.hf.space/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_type": "alert-triage"}'
+
+# 2. Take an action
+curl -X POST https://asuml21-incident-response-openenv.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"task_type": "alert-triage", "action": {"action_type": "classify", "severity": "P1", "affected_service": "payment-service", "explanation": "Payment service OOMKilled with 0 TPS"}}'
+
+# 3. Check state
+curl https://asuml21-incident-response-openenv.hf.space/state?task_type=alert-triage
+```
 
 ---
 
@@ -143,7 +163,7 @@ python inference.py
 
 ## Baseline Scores
 
-Scores produced by `gpt-4.1-mini` with `temperature=0.2`:
+Scores produced by `Qwen/Qwen2.5-72B-Instruct` with `temperature=0.2`:
 
 | Task | Score | Notes |
 |------|-------|-------|
