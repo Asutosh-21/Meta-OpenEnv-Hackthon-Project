@@ -1,0 +1,30 @@
+{
+  "llm_api_key": "",
+  "llm_model": "gpt-4.1-mini",
+  "llm_provider": "openai",
+  "api_base_url": "https://api.openai.com/v1",
+  "env_base_url": "http://localhost:7860",
+  "tasks": [
+    {
+      "task_type": "alert-triage",
+      "seed": 42,
+      "max_steps": 3,
+      "description": "Classify incident severity and identify affected service"
+    },
+    {
+      "task_type": "root-cause",
+      "seed": 42,
+      "max_steps": 5,
+      "description": "Identify root cause from correlated alerts and metrics"
+    },
+    {
+      "task_type": "full-incident-response",
+      "seed": 42,
+      "max_steps": 8,
+      "description": "Full incident lifecycle: diagnose, remediate, verify, postmortem"
+    }
+  ],
+  "system_prompt": "You are an expert DevOps/SRE engineer responding to production incidents. Analyze alerts, logs, and metrics to triage and resolve incidents.",
+  "success_threshold": 0.5,
+  "temperature": 0.2
+}

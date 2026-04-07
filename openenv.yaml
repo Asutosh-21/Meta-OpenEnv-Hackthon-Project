@@ -1,0 +1,79 @@
+name: incident-response-openenv
+version: "1.0.0"
+description: >
+  An OpenEnv RL environment simulating real-world DevOps incident response.
+  An AI agent triages production alerts, identifies root causes, and executes
+  remediation steps across three tasks of increasing difficulty.
+
+author: openenv-team
+tags:
+  - openenv
+  - devops
+  - incident-response
+  - sre
+  - rl-environment
+
+tasks:
+  - id: alert-triage
+    difficulty: easy
+    description: Classify incident severity (P1-P4) and identify the affected service from alerts and logs
+    max_steps: 3
+    reward_range: [0.0, 1.0]
+
+  - id: root-cause
+    difficulty: medium
+    description: Identify root cause from correlated alerts, logs, and metrics
+    max_steps: 5
+    reward_range: [0.0, 1.0]
+
+  - id: full-incident-response
+    difficulty: hard
+    description: Full incident lifecycle — classify, investigate, remediate, verify, write postmortem
+    max_steps: 8
+    reward_range: [0.0, 1.0]
+
+observation_space:
+  type: object
+  fields:
+    task_id: string
+    task_type: string
+    incident_id: string
+    alerts: array
+    logs: array
+    metrics: object
+    runbook: string (optional)
+    step_number: integer
+    max_steps: integer
+    context: string (optional)
+
+action_space:
+  type: object
+  fields:
+    action_type: "classify | investigate | remediate | verify | postmortem"
+    severity: "P1 | P2 | P3 | P4 (optional)"
+    affected_service: string (optional)
+    root_cause: string (optional)
+    explanation: string (optional)
+    remediation_steps: array (optional)
+    postmortem: string (optional)
+    raw_text: string (optional)
+
+reward:
+  type: float
+  range: [0.0, 1.0]
+  description: >
+    Partial reward at each step. alert-triage: severity match (0.6) + service match (0.4).
+    root-cause: root cause accuracy (0.5) + alert correlation F1 (0.3) + explanation (0.2).
+    full-incident-response: severity (0.15) + root cause (0.25) + remediation steps (0.40) + efficiency (0.20).
+
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  tasks: GET /tasks
+  health: GET /health
+
+runtime:
+  framework: fastapi
+  python: "3.11"
+  port: 7860
