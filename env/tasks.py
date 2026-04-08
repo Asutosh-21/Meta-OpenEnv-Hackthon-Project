@@ -1,20 +1,21 @@
 from typing import Dict, Any, Tuple
 
+SEVERITY_MAP = {"P1": 4, "P2": 3, "P3": 2, "P4": 1}
+
+
 def _clamp(score: float) -> float:
     """Clamp score to strictly (0, 1) — never exactly 0.0 or 1.0."""
     return round(min(max(score, 0.1), 0.9), 4)
 
 
-
-
 def _severity_score(predicted: str, actual: str) -> float:
-    """Partial credit: adjacent severity gets 0.5, off by 2 gets 0.0."""
+    """Partial credit: exact=1.0, adjacent=0.5, off by 2+=0.1"""
     if predicted == actual:
         return 1.0
     diff = abs(SEVERITY_MAP.get(predicted, 0) - SEVERITY_MAP.get(actual, 0))
     if diff == 1:
         return 0.5
-    return 0.0
+    return 0.1
 
 
 def grade_alert_triage(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> Tuple[float, Dict[str, float], str]:
@@ -29,14 +30,14 @@ def grade_alert_triage(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> 
 
     pred_svc = (action.get("affected_service") or "").lower().strip()
     true_svc = ground_truth["affected_service"].lower().strip()
-    svc_score = 0.4 if (pred_svc and (pred_svc in true_svc or true_svc in pred_svc)) else 0.0
+    svc_score = 0.4 if (pred_svc and (pred_svc in true_svc or true_svc in pred_svc)) else 0.1
 
     total = _clamp(sev_score + svc_score)
     breakdown = {"severity": round(sev_score, 4), "service": round(svc_score, 4)}
     feedback = (
-        f"Severity: {'correct' if sev_score == 0.6 else 'partial' if sev_score > 0 else 'wrong'} "
+        f"Severity: {'correct' if sev_score >= 0.6 else 'partial' if sev_score > 0.1 else 'wrong'} "
         f"({action.get('severity')} vs {ground_truth['severity']}), "
-        f"Service: {'correct' if svc_score > 0 else 'wrong'} "
+        f"Service: {'correct' if svc_score >= 0.4 else 'wrong'} "
         f"({action.get('affected_service')} vs {ground_truth['affected_service']})"
     )
     return total, breakdown, feedback
@@ -52,20 +53,20 @@ def grade_root_cause(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> Tu
     rc_keywords = set(true_rc.replace("_", " ").split())
     pred_keywords = set(pred_rc.replace("_", " ").split())
     overlap = len(rc_keywords & pred_keywords) / max(len(rc_keywords), 1)
-    rc_score = round(min(overlap, 1.0) * 0.5, 4)
+    rc_score = round(max(overlap, 0.1) * 0.5, 4)
 
     true_alerts = set(ground_truth.get("correlated_alerts", []))
     pred_alerts = set(action.get("correlated_alerts", []) or [])
     if true_alerts:
         precision = len(pred_alerts & true_alerts) / max(len(pred_alerts), 1)
         recall = len(pred_alerts & true_alerts) / len(true_alerts)
-        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
-        corr_score = round(f1 * 0.3, 4)
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.1
+        corr_score = round(max(f1, 0.1) * 0.3, 4)
     else:
         corr_score = 0.3
 
     explanation = action.get("explanation") or ""
-    exp_score = round(min(len(explanation.split()) / 30, 1.0) * 0.2, 4)
+    exp_score = round(max(min(len(explanation.split()) / 30, 1.0), 0.1) * 0.2, 4)
 
     total = _clamp(rc_score + corr_score + exp_score)
     breakdown = {"root_cause": rc_score, "correlation": corr_score, "explanation": exp_score}
@@ -103,7 +104,7 @@ def grade_full_incident_response(
     rc_keywords = set(true_rc.replace("_", " ").split())
     pred_keywords = set(pred_rc.replace("_", " ").split())
     overlap = len(rc_keywords & pred_keywords) / max(len(rc_keywords), 1)
-    rc_score = round(min(overlap, 1.0) * 0.25, 4)
+    rc_score = round(max(overlap, 0.1) * 0.25, 4)
 
     true_steps = ground_truth.get("remediation_steps", [])
     pred_steps = []
@@ -119,11 +120,11 @@ def grade_full_incident_response(
             if len(ts_kw & ps_kw) / max(len(ts_kw), 1) >= 0.5:
                 matched += 1
                 break
-    rem_score = round((matched / max(len(true_steps), 1)) * 0.40, 4)
+    rem_score = round(max(matched / max(len(true_steps), 1), 0.1) * 0.40, 4)
 
     max_steps = 8
     steps_used = len(actions)
-    efficiency = max(0.0, 1.0 - (steps_used - 1) / max_steps)
+    efficiency = max(0.1, 1.0 - (steps_used - 1) / max_steps)
     eff_score = round(efficiency * 0.20, 4)
 
     total = _clamp(sev_score + rc_score + rem_score + eff_score)
