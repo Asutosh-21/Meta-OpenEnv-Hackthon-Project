@@ -85,7 +85,7 @@ def grade_full_incident_response(
     Severity: 0.15, root cause: 0.25, remediation steps: 0.40, efficiency: 0.20
     """
     if not actions:
-        return 0.0, {}, "No actions taken"
+        return 0.1, {}, "No actions taken"
 
     # scan all actions for best severity and root_cause
     best_sev = ""

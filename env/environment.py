@@ -129,6 +129,6 @@ class IncidentResponseEnv:
             if action_dict.get("action_type") == "remediate":
                 rem_steps = action_dict.get("remediation_steps") or []
                 if not rem_steps:
-                    score = max(0.0, score - 0.1)
+                    score = max(0.1, score - 0.1)
             done = action_dict.get("action_type") == "postmortem"
             return score, done

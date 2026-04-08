@@ -166,7 +166,7 @@ def run_episode(task_type: str) -> None:
                 step_resp = env_step(task_type, action_dict)
             except Exception as e:
                 error_msg = str(e)
-                log_step(step=step, action=action_str, reward=0.0, done=True, error=error_msg)
+                log_step(step=step, action=action_str, reward=0.1, done=True, error=error_msg)
                 steps_taken = step
                 break
 
@@ -184,7 +184,7 @@ def run_episode(task_type: str) -> None:
                 break
 
         final_score = sum(rewards) / max(len(rewards), 1)
-        final_score = min(max(final_score, 0.0), 1.0)
+        final_score = min(max(final_score, 0.1), 0.9)
         success = final_score >= SUCCESS_THRESHOLD
 
     except Exception as exc:
