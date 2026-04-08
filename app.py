@@ -89,6 +89,8 @@ def list_tasks():
                 "max_steps": 3,
                 "reward_range": [0.1, 0.9],
                 "score_range": [0.1, 0.9],
+                "min_score": 0.1,
+                "max_score": 0.9,
             },
             {
                 "id": "root-cause",
@@ -97,6 +99,8 @@ def list_tasks():
                 "max_steps": 5,
                 "reward_range": [0.1, 0.9],
                 "score_range": [0.1, 0.9],
+                "min_score": 0.1,
+                "max_score": 0.9,
             },
             {
                 "id": "full-incident-response",
@@ -105,6 +109,8 @@ def list_tasks():
                 "max_steps": 8,
                 "reward_range": [0.1, 0.9],
                 "score_range": [0.1, 0.9],
+                "min_score": 0.1,
+                "max_score": 0.9,
             },
         ]
     }
