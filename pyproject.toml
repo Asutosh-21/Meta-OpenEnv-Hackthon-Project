@@ -15,8 +15,12 @@ dependencies = [
     "uvicorn==0.30.6",
     "pydantic==2.7.4",
     "requests==2.33.0",
-    "openai==1.40.0",
+    "openai>=2.7.2",
+    "openenv-core>=0.2.0",
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [project.urls]
 Homepage = "https://huggingface.co/spaces/Asuml21/incident-response-openenv"
