@@ -80,7 +80,7 @@ class IncidentResponseEnv:
             "done": self._done,
             "actions_taken": self._actions_taken,
             "rewards": self._rewards,
-            "cumulative_reward": round(sum(self._rewards), 4) if self._rewards else 0.0,
+            "cumulative_reward": round(sum(self._rewards), 4) if self._rewards else 0.1,
         }
 
     # ── internal helpers ──────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ class IncidentResponseEnv:
         context = None
         if self._step_num > 0 and self._actions_taken:
             last = self._actions_taken[-1]
-            last_reward = self._rewards[-1] if self._rewards else 0.0
+            last_reward = self._rewards[-1] if self._rewards else 0.1
             context = (
                 f"Previous action reward: {last_reward:.2f}. "
                 f"Steps remaining: {max_s - self._step_num}."

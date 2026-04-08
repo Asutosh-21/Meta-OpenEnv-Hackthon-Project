@@ -49,7 +49,7 @@ def reset(req: ResetRequest = None):
     env = IncidentResponseEnv(task_type=task_type, seed=req.seed)
     _envs[task_type] = env
     obs = env.reset()
-    return JSONResponse(content={"observation": obs.model_dump(), "done": False, "reward": 0.0, "info": {}})
+    return JSONResponse(content={"observation": obs.model_dump(), "done": False, "reward": 0.1, "info": {}})
 
 
 @app.post("/step")
