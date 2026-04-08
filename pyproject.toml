@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "incident-response-openenv"
+version = "1.0.0"
+description = "OpenEnv RL environment for DevOps incident response triage"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["openenv", "reinforcement-learning", "devops", "incident-response"]
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn==0.30.6",
+    "pydantic==2.7.4",
+    "requests==2.33.0",
+    "openai==1.40.0",
+]
+
+[project.urls]
+Homepage = "https://huggingface.co/spaces/Asuml21/incident-response-openenv"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["env*"]
