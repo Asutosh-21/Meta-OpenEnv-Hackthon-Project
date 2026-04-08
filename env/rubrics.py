@@ -1,8 +1,18 @@
-from openenv.core.rubrics.base import Rubric
+try:
+    from openenv.core.rubrics.base import Rubric as _BaseRubric
+    _HAS_OPENENV = True
+except ImportError:
+    _HAS_OPENENV = False
+    class _BaseRubric:
+        def __call__(self, action, observation):
+            return self.forward(action, observation)
+        def forward(self, action, observation):
+            raise NotImplementedError
+
 from env.tasks import grade_alert_triage, grade_root_cause, grade_full_incident_response
 
 
-class AlertTriageRubric(Rubric):
+class AlertTriageRubric(_BaseRubric):
     def forward(self, action: dict, observation: dict) -> float:
         gt = observation.get("ground_truth", {})
         if not gt:
@@ -11,7 +21,7 @@ class AlertTriageRubric(Rubric):
         return float(score)
 
 
-class RootCauseRubric(Rubric):
+class RootCauseRubric(_BaseRubric):
     def forward(self, action: dict, observation: dict) -> float:
         gt = observation.get("ground_truth", {})
         if not gt:
@@ -20,7 +30,7 @@ class RootCauseRubric(Rubric):
         return float(score)
 
 
-class FullIncidentRubric(Rubric):
+class FullIncidentRubric(_BaseRubric):
     def forward(self, action: dict, observation: dict) -> float:
         gt = observation.get("ground_truth", {})
         actions = observation.get("actions_taken", [action])
