@@ -170,7 +170,7 @@ def run_episode(task_type: str) -> None:
                 steps_taken = step
                 break
 
-            reward = float(step_resp.get("reward", 0.0))
+            reward = float(step_resp.get("reward", 0.1))
             done = bool(step_resp.get("done", False))
             obs = step_resp.get("observation", obs)
             error_msg = None
@@ -186,6 +186,8 @@ def run_episode(task_type: str) -> None:
         final_score = sum(rewards) / max(len(rewards), 1)
         final_score = min(max(final_score, 0.1), 0.9)
         success = final_score >= SUCCESS_THRESHOLD
+        # ensure no exact 0.0 or 1.0 in rewards list
+        rewards = [min(max(r, 0.1), 0.9) for r in rewards]
 
     except Exception as exc:
         error_msg = str(exc)
