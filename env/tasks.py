@@ -1,6 +1,10 @@
 from typing import Dict, Any, Tuple
 
-SEVERITY_MAP = {"P1": 4, "P2": 3, "P3": 2, "P4": 1}
+def _clamp(score: float) -> float:
+    """Clamp score to strictly (0, 1) — never exactly 0.0 or 1.0."""
+    return round(min(max(score, 0.1), 0.9), 4)
+
+
 
 
 def _severity_score(predicted: str, actual: str) -> float:
@@ -27,7 +31,7 @@ def grade_alert_triage(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> 
     true_svc = ground_truth["affected_service"].lower().strip()
     svc_score = 0.4 if (pred_svc and (pred_svc in true_svc or true_svc in pred_svc)) else 0.0
 
-    total = round(sev_score + svc_score, 4)
+    total = _clamp(sev_score + svc_score)
     breakdown = {"severity": round(sev_score, 4), "service": round(svc_score, 4)}
     feedback = (
         f"Severity: {'correct' if sev_score == 0.6 else 'partial' if sev_score > 0 else 'wrong'} "
@@ -63,7 +67,7 @@ def grade_root_cause(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> Tu
     explanation = action.get("explanation") or ""
     exp_score = round(min(len(explanation.split()) / 30, 1.0) * 0.2, 4)
 
-    total = round(rc_score + corr_score + exp_score, 4)
+    total = _clamp(rc_score + corr_score + exp_score)
     breakdown = {"root_cause": rc_score, "correlation": corr_score, "explanation": exp_score}
     feedback = (
         f"Root cause overlap: {overlap:.0%}, "
@@ -122,7 +126,7 @@ def grade_full_incident_response(
     efficiency = max(0.0, 1.0 - (steps_used - 1) / max_steps)
     eff_score = round(efficiency * 0.20, 4)
 
-    total = round(sev_score + rc_score + rem_score + eff_score, 4)
+    total = _clamp(sev_score + rc_score + rem_score + eff_score)
     breakdown = {
         "severity": sev_score,
         "root_cause": rc_score,

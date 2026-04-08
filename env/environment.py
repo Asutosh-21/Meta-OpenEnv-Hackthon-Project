@@ -45,15 +45,15 @@ class IncidentResponseEnv:
         # penalise invalid action_type
         valid = VALID_ACTIONS.get(self.task_type, [])
         if action_dict.get("action_type") not in valid:
-            self._rewards.append(0.0)
+            self._rewards.append(0.1)
             max_s = MAX_STEPS[self.task_type]
             done = self._step_num >= max_s
             self._done = done
             obs = self._make_observation()
-            return StepResult(observation=obs, reward=0.0, done=done,
+            return StepResult(observation=obs, reward=0.1, done=done,
                               info={"step": self._step_num, "max_steps": max_s,
                                     "incident_id": self._incident["incident_id"],
-                                    "cumulative_reward": 0.0, "error": "invalid action_type"})
+                                    "cumulative_reward": 0.1, "error": "invalid action_type"})
 
         reward, done = self._compute_reward(action_dict)
         self._rewards.append(reward)
