@@ -9,9 +9,9 @@ def _clamp(score: float) -> float:
 
 
 def _severity_score(predicted: str, actual: str) -> float:
-    """Partial credit: exact=1.0, adjacent=0.5, off by 2+=0.1"""
+    """Partial credit: exact=0.9, adjacent=0.5, off by 2+=0.1"""
     if predicted == actual:
-        return 1.0
+        return 0.9
     diff = abs(SEVERITY_MAP.get(predicted, 0) - SEVERITY_MAP.get(actual, 0))
     if diff == 1:
         return 0.5
@@ -53,7 +53,7 @@ def grade_root_cause(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> Tu
     rc_keywords = set(true_rc.replace("_", " ").split())
     pred_keywords = set(pred_rc.replace("_", " ").split())
     overlap = len(rc_keywords & pred_keywords) / max(len(rc_keywords), 1)
-    rc_score = round(max(overlap, 0.1) * 0.5, 4)
+    rc_score = round(max(min(overlap, 0.9), 0.1) * 0.5, 4)
 
     true_alerts = set(ground_truth.get("correlated_alerts", []))
     pred_alerts = set(action.get("correlated_alerts", []) or [])
@@ -61,12 +61,13 @@ def grade_root_cause(action: Dict[str, Any], ground_truth: Dict[str, Any]) -> Tu
         precision = len(pred_alerts & true_alerts) / max(len(pred_alerts), 1)
         recall = len(pred_alerts & true_alerts) / len(true_alerts)
         f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.1
+        f1 = min(f1, 0.9)
         corr_score = round(max(f1, 0.1) * 0.3, 4)
     else:
         corr_score = 0.3
 
     explanation = action.get("explanation") or ""
-    exp_score = round(max(min(len(explanation.split()) / 30, 1.0), 0.1) * 0.2, 4)
+    exp_score = round(max(min(len(explanation.split()) / 30, 0.9), 0.1) * 0.2, 4)
 
     total = _clamp(rc_score + corr_score + exp_score)
     breakdown = {"root_cause": rc_score, "correlation": corr_score, "explanation": exp_score}
@@ -104,7 +105,7 @@ def grade_full_incident_response(
     rc_keywords = set(true_rc.replace("_", " ").split())
     pred_keywords = set(pred_rc.replace("_", " ").split())
     overlap = len(rc_keywords & pred_keywords) / max(len(rc_keywords), 1)
-    rc_score = round(max(overlap, 0.1) * 0.25, 4)
+    rc_score = round(max(min(overlap, 0.9), 0.1) * 0.25, 4)
 
     true_steps = ground_truth.get("remediation_steps", [])
     pred_steps = []
@@ -120,11 +121,11 @@ def grade_full_incident_response(
             if len(ts_kw & ps_kw) / max(len(ts_kw), 1) >= 0.5:
                 matched += 1
                 break
-    rem_score = round(max(matched / max(len(true_steps), 1), 0.1) * 0.40, 4)
+    rem_score = round(max(min(matched / max(len(true_steps), 1), 0.9), 0.1) * 0.40, 4)
 
     max_steps = 8
     steps_used = len(actions)
-    efficiency = max(0.1, 1.0 - (steps_used - 1) / max_steps)
+    efficiency = max(0.1, min(1.0 - (steps_used - 1) / max_steps, 0.9))
     eff_score = round(efficiency * 0.20, 4)
 
     total = _clamp(sev_score + rc_score + rem_score + eff_score)

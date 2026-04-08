@@ -91,7 +91,8 @@ def run_scenario(config: dict, task: dict) -> dict:
         r.raise_for_status()
         result = r.json()
 
-        reward = float(result.get("reward", 0.0))
+        reward = float(result.get("reward", 0.1))
+        reward = min(max(reward, 0.1), 0.9)
         done = bool(result.get("done", False))
         obs = result.get("observation", obs)
 
@@ -103,6 +104,7 @@ def run_scenario(config: dict, task: dict) -> dict:
             break
 
     score = sum(rewards) / max(len(rewards), 1)
+    score = min(max(score, 0.1), 0.9)
     return {"task_type": task_type, "steps": len(rewards),
             "score": round(score, 4), "rewards": rewards, "actions": actions_log}
 

@@ -64,7 +64,7 @@ def step(req: StepRequest):
         raise HTTPException(status_code=400, detail=str(e))
     return JSONResponse(content={
         "observation": result.observation.model_dump(),
-        "reward": result.reward,
+        "reward": round(min(max(result.reward, 0.1), 0.9), 4),
         "done": result.done,
         "info": result.info,
     })
@@ -87,18 +87,24 @@ def list_tasks():
                 "difficulty": "easy",
                 "description": "Classify incident severity (P1-P4) and identify affected service",
                 "max_steps": 3,
+                "reward_range": [0.1, 0.9],
+                "score_range": [0.1, 0.9],
             },
             {
                 "id": "root-cause",
                 "difficulty": "medium",
                 "description": "Identify root cause from correlated alerts and metrics",
                 "max_steps": 5,
+                "reward_range": [0.1, 0.9],
+                "score_range": [0.1, 0.9],
             },
             {
                 "id": "full-incident-response",
                 "difficulty": "hard",
                 "description": "Full incident lifecycle: diagnose, remediate, verify, postmortem",
                 "max_steps": 8,
+                "reward_range": [0.1, 0.9],
+                "score_range": [0.1, 0.9],
             },
         ]
     }

@@ -124,7 +124,7 @@ class IncidentResponseEnv:
         else:  # full-incident-response
             score, _, _ = grade_full_incident_response(self._actions_taken, gt)
             # shaped reward: delta from previous cumulative
-            prev = sum(self._rewards[:-1]) if len(self._rewards) > 1 else 0.0
+            prev = sum(self._rewards[:-1]) if len(self._rewards) > 1 else 0.1
             # penalise wrong remediation
             if action_dict.get("action_type") == "remediate":
                 rem_steps = action_dict.get("remediation_steps") or []
