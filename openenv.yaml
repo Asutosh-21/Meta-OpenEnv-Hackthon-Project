@@ -18,19 +18,16 @@ tasks:
     difficulty: easy
     description: Classify incident severity (P1-P4) and identify the affected service from alerts and logs
     max_steps: 3
-    reward_range: [0.1, 0.9]
 
   - id: root-cause
     difficulty: medium
     description: Identify root cause from correlated alerts, logs, and metrics
     max_steps: 5
-    reward_range: [0.1, 0.9]
 
   - id: full-incident-response
     difficulty: hard
     description: Full incident lifecycle — classify, investigate, remediate, verify, write postmortem
     max_steps: 8
-    reward_range: [0.1, 0.9]
 
 observation_space:
   type: object
@@ -56,17 +53,14 @@ action_space:
     explanation: string (optional)
     remediation_steps: array (optional)
     postmortem: string (optional)
-    raw_text: string (optional)
 
 reward:
   type: float
-  range: [0.1, 0.9]
-  min: 0.1
-  max: 0.9
   description: >
     Partial reward at each step. alert-triage: severity match (0.6) + service match (0.4).
     root-cause: root cause accuracy (0.5) + alert correlation F1 (0.3) + explanation (0.2).
     full-incident-response: severity (0.15) + root cause (0.25) + remediation steps (0.40) + efficiency (0.20).
+    All scores are strictly between 0 and 1 (exclusive).
 
 endpoints:
   reset: POST /reset
