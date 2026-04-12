@@ -23,7 +23,7 @@ HF_TOKEN     = os.getenv("HF_TOKEN")
 if HF_TOKEN is None:
     raise ValueError("HF_TOKEN environment variable is required")
 
-ENV_BASE_URL      = os.getenv("ENV_BASE_URL", "http://localhost:7860")
+ENV_BASE_URL      = os.getenv("ENV_BASE_URL", "https://asuml21-incident-response-openenv.hf.space")
 BENCHMARK         = "incident-response"
 MAX_STEPS         = 8
 TEMPERATURE       = 0.2
