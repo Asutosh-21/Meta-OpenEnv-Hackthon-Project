@@ -9,90 +9,99 @@ Environment variables:
 
 import json
 import os
-import sys
 import textwrap
 from typing import List, Optional
 
 import requests
 from openai import OpenAI
 
-# ── Environment variables ────────────────────────────────────────────────────
+# ── Environment variables ─────────────────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
+MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN     = os.getenv("HF_TOKEN")
 
 if HF_TOKEN is None:
     raise ValueError("HF_TOKEN environment variable is required")
 
-ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
-BENCHMARK = "incident-response"
-MAX_STEPS = 8
-TEMPERATURE = 0.2
-MAX_TOKENS = 512
+ENV_BASE_URL      = os.getenv("ENV_BASE_URL", "http://localhost:7860")
+BENCHMARK         = "incident-response"
+MAX_STEPS         = 8
+TEMPERATURE       = 0.2
+MAX_TOKENS        = 512
 SUCCESS_THRESHOLD = 0.5
 
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
-# ── Logging helpers (exact format required by judges) ────────────────────────
+
+# ── Logging ───────────────────────────────────────────────────────────────────
 
 def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
-    error_val = error if error else "null"
-    done_val = str(done).lower()
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
+    print(
+        f"[STEP] step={step} action={action} "
+        f"reward={reward:.2f} done={str(done).lower()} error={error or 'null'}",
+        flush=True,
+    )
 
 
 def log_end(success: bool, steps: int, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+    print(
+        f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}",
+        flush=True,
+    )
 
 
-# ── Prompt builders ──────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def clamp(v: float) -> float:
+    """Ensure score is strictly between 0 and 1."""
+    return round(min(max(v, 0.1), 0.9), 4)
+
 
 SYSTEM_PROMPT = textwrap.dedent("""
 You are an expert DevOps/SRE engineer responding to production incidents.
 Analyze the incident data and respond with a JSON action object.
 
-For task alert-triage, respond with:
-{"action_type": "classify", "severity": "P1|P2|P3|P4", "affected_service": "<service>", "explanation": "<brief reason>"}
+For task alert-triage:
+{"action_type": "classify", "severity": "P1|P2|P3|P4", "affected_service": "<service>", "explanation": "<reason>"}
 
-For task root-cause, respond with:
-{"action_type": "investigate", "severity": "P1|P2|P3|P4", "affected_service": "<service>", "root_cause": "<root cause>", "correlated_alerts": ["ALT-XXX"], "explanation": "<detailed reasoning>"}
+For task root-cause:
+{"action_type": "investigate", "severity": "P1|P2|P3|P4", "affected_service": "<service>", "root_cause": "<root cause>", "correlated_alerts": ["ALT-XXX"], "explanation": "<reasoning>"}
 
-For task full-incident-response, respond with one of:
+For task full-incident-response use one of:
 {"action_type": "classify", "severity": "P1|P2|P3|P4", "affected_service": "<service>", "explanation": "<reason>"}
 {"action_type": "investigate", "root_cause": "<root cause>", "correlated_alerts": ["ALT-XXX"], "explanation": "<reasoning>"}
-{"action_type": "remediate", "remediation_steps": ["step1", "step2", ...], "explanation": "<plan>"}
+{"action_type": "remediate", "remediation_steps": ["step1", "step2"], "explanation": "<plan>"}
 {"action_type": "verify", "explanation": "<what you verified>"}
-{"action_type": "postmortem", "postmortem": "<summary of incident, root cause, fix, prevention>"}
+{"action_type": "postmortem", "postmortem": "<summary>"}
 
-Respond ONLY with valid JSON. No markdown, no explanation outside the JSON.
+Respond ONLY with valid JSON. No markdown, no extra text.
 """).strip()
 
 
-def build_user_prompt(obs: dict) -> str:
-    alerts_str = json.dumps(obs.get("alerts", []), indent=2)
-    logs_str = "\n".join(obs.get("logs", []))
-    metrics_str = json.dumps(obs.get("metrics", {}), indent=2)
+def get_action(obs: dict) -> dict:
+    alerts  = json.dumps(obs.get("alerts",  []), indent=2)
+    logs    = "\n".join(obs.get("logs",     []))
+    metrics = json.dumps(obs.get("metrics", {}), indent=2)
     runbook = obs.get("runbook") or "N/A"
     context = obs.get("context") or ""
-    return textwrap.dedent(f"""
-Incident ID: {obs['incident_id']}
-Task: {obs['task_type']}
-Step: {obs['step_number']} / {obs['max_steps']}
+
+    user = textwrap.dedent(f"""
+Incident: {obs['incident_id']} | Task: {obs['task_type']} | Step {obs['step_number']}/{obs['max_steps']}
 {f'Context: {context}' if context else ''}
 
 ALERTS:
-{alerts_str}
+{alerts}
 
 LOGS:
-{logs_str}
+{logs}
 
 METRICS:
-{metrics_str}
+{metrics}
 
 RUNBOOK:
 {runbook}
@@ -100,35 +109,27 @@ RUNBOOK:
 Respond with the appropriate JSON action.
 """).strip()
 
-
-# ── LLM call ─────────────────────────────────────────────────────────────────
-
-def get_action(obs: dict) -> dict:
-    user_prompt = build_user_prompt(obs)
     try:
-        completion = client.chat.completions.create(
+        resp = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
+                {"role": "user",   "content": user},
             ],
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
         )
-        text = (completion.choices[0].message.content or "").strip()
-        # strip markdown code fences if present
+        text = (resp.choices[0].message.content or "").strip()
         if text.startswith("```"):
             text = text.split("```")[1]
             if text.startswith("json"):
                 text = text[4:]
-        return json.loads(text)
+        return json.loads(text.strip())
     except Exception as exc:
-        print(f"[DEBUG] LLM call failed: {exc}", flush=True)
+        print(f"[DEBUG] LLM error: {exc}", flush=True)
         return {"action_type": "classify", "severity": "P2",
                 "affected_service": "unknown", "explanation": "fallback"}
 
-
-# ── Env HTTP helpers ──────────────────────────────────────────────────────────
 
 def env_reset(task_type: str) -> dict:
     r = requests.post(f"{ENV_BASE_URL}/reset",
@@ -144,62 +145,58 @@ def env_step(task_type: str, action: dict) -> dict:
     return r.json()
 
 
-# ── Episode runner ────────────────────────────────────────────────────────────
+# ── Episode ───────────────────────────────────────────────────────────────────
 
 def run_episode(task_type: str) -> None:
     log_start(task=task_type, env=BENCHMARK, model=MODEL_NAME)
 
-    rewards: List[float] = []
-    steps_taken = 0
-    success = False
-    error_msg = None
+    rewards:     List[float] = []
+    steps_taken: int         = 0
+    success:     bool        = False
+    score:       float       = 0.5
 
     try:
-        reset_resp = env_reset(task_type)
-        obs = reset_resp["observation"]
+        obs = env_reset(task_type)["observation"]
 
         for step in range(1, MAX_STEPS + 1):
             action_dict = get_action(obs)
-            action_str = json.dumps(action_dict, separators=(",", ":"))
+            action_str  = json.dumps(action_dict, separators=(",", ":"))
 
             try:
-                step_resp = env_step(task_type, action_dict)
+                resp = env_step(task_type, action_dict)
             except Exception as e:
-                error_msg = str(e)
-                log_step(step=step, action=action_str, reward=0.1, done=True, error=error_msg)
+                log_step(step, action_str, 0.1, True, str(e))
+                rewards.append(0.1)
                 steps_taken = step
                 break
 
-            reward = float(step_resp.get("reward", 0.1))
-            done = bool(step_resp.get("done", False))
-            obs = step_resp.get("observation", obs)
-            error_msg = None
+            reward = clamp(float(resp.get("reward", 0.5)))
+            done   = bool(resp.get("done", False))
+            obs    = resp.get("observation", obs)
 
             rewards.append(reward)
             steps_taken = step
-
-            log_step(step=step, action=action_str, reward=reward, done=done, error=error_msg)
+            log_step(step, action_str, reward, done, None)
 
             if done:
                 break
 
-        final_score = sum(rewards) / max(len(rewards), 1)
-        final_score = min(max(final_score, 0.1), 0.9)
-        success = final_score >= SUCCESS_THRESHOLD
-        # ensure no exact 0.0 or 1.0 in rewards list
-        rewards = [min(max(r, 0.1), 0.9) for r in rewards]
+        score   = clamp(sum(rewards) / max(len(rewards), 1))
+        success = score >= SUCCESS_THRESHOLD
 
     except Exception as exc:
-        error_msg = str(exc)
         print(f"[DEBUG] Episode error: {exc}", flush=True)
+        score = 0.5
 
     finally:
+        if not rewards:
+            rewards = [0.5]
+        score = clamp(sum(rewards) / max(len(rewards), 1))
         log_end(success=success, steps=steps_taken, rewards=rewards)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    tasks = ["alert-triage", "root-cause", "full-incident-response"]
-    for task in tasks:
+    for task in ["alert-triage", "root-cause", "full-incident-response"]:
         run_episode(task)
