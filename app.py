@@ -38,6 +38,57 @@ def health():
     return {"status": "healthy", "service": "incident-response-env"}
 
 
+@app.get("/metadata")
+def metadata():
+    return {
+        "name": "incident-response-openenv",
+        "description": "OpenEnv RL environment for DevOps incident response triage",
+        "version": "1.0.0",
+        "tasks": ["alert-triage", "root-cause", "full-incident-response"],
+    }
+
+
+@app.get("/schema")
+def schema():
+    return {
+        "action": {
+            "type": "object",
+            "properties": {
+                "action_type": {"type": "string"},
+                "severity": {"type": "string"},
+                "affected_service": {"type": "string"},
+                "root_cause": {"type": "string"},
+                "explanation": {"type": "string"},
+                "remediation_steps": {"type": "array"},
+                "postmortem": {"type": "string"},
+            }
+        },
+        "observation": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string"},
+                "task_type": {"type": "string"},
+                "incident_id": {"type": "string"},
+                "alerts": {"type": "array"},
+                "logs": {"type": "array"},
+                "metrics": {"type": "object"},
+                "step_number": {"type": "integer"},
+                "max_steps": {"type": "integer"},
+            }
+        },
+        "state": {
+            "type": "object",
+            "properties": {
+                "task_type": {"type": "string"},
+                "step_number": {"type": "integer"},
+                "done": {"type": "boolean"},
+                "rewards": {"type": "array"},
+                "cumulative_reward": {"type": "number"},
+            }
+        },
+    }
+
+
 @app.post("/reset")
 def reset(req: ResetRequest = None):
     if req is None:
