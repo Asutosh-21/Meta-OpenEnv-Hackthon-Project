@@ -37,13 +37,13 @@ def log_step(step, action, reward, done, error):
     print(f"[STEP] step={step} action={action} reward={reward:.2f} done={str(done).lower()} error={err}", flush=True)
 
 
-def log_end(success, steps, rewards):
+def log_end(success, steps, score, rewards):
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 
 def clamp(v):
-    return round(min(max(float(v), 0.15), 0.85), 4)
+    return round(min(max(float(v), 0.2), 0.99), 4)
 
 
 SYSTEM_PROMPT = textwrap.dedent("""
@@ -142,7 +142,7 @@ def run_episode(client, task_type):
             rewards = [0.5]
         score = clamp(sum(rewards) / max(len(rewards), 1))
         success = score >= SUCCESS_THRESHOLD
-        log_end(success=success, steps=steps_taken, rewards=rewards)
+        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":

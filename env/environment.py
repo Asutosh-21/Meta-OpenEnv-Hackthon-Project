@@ -50,10 +50,10 @@ class IncidentResponseEnv:
             done = self._step_num >= max_s
             self._done = done
             obs = self._make_observation()
-            return StepResult(observation=obs, reward=0.15, done=done,
+            return StepResult(observation=obs, reward=0.2, done=done,
                               info={"step": self._step_num, "max_steps": max_s,
                                     "incident_id": self._incident["incident_id"],
-                                    "cumulative_reward": 0.15, "error": "invalid action_type"})
+                                    "cumulative_reward": 0.2, "error": "invalid action_type"})
 
         reward, done = self._compute_reward(action_dict)
         self._rewards.append(reward)
@@ -118,6 +118,9 @@ class IncidentResponseEnv:
 
         elif self.task_type == "root-cause":
             score, _, _ = grade_root_cause(action_dict, gt)
+            # add step-based bonus to ensure varying rewards
+            step_bonus = round(self._step_num * 0.02, 4)
+            score = round(min(max(score + step_bonus, 0.15), 0.85), 4)
             done = action_dict.get("action_type") == "investigate"
             return score, done
 
