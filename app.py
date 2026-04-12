@@ -108,11 +108,16 @@ def step(req: StepRequest):
     task_type = req.task_type or "alert-triage"
     env = _envs.get(task_type)
     if env is None:
-        raise HTTPException(status_code=400, detail="Call /reset first")
+        # auto-reset if not initialized
+        env = IncidentResponseEnv(task_type=task_type, seed=42)
+        _envs[task_type] = env
+        env.reset()
     try:
         result = env.step(req.action)
-    except RuntimeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError:
+        # episode done - auto reset and try again
+        env.reset()
+        result = env.step(req.action)
     return JSONResponse(content={
         "observation": result.observation.model_dump(),
         "reward": round(min(max(result.reward, 0.15), 0.85), 4),

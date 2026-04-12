@@ -9,12 +9,13 @@ from typing import List, Optional
 import requests
 from openai import OpenAI
 
-# Required environment variables
+# Environment variables - exact format required by submission checklist
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Support both HF_TOKEN and OPENAI_API_KEY
-HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+# Optional - if you use from_docker_image():
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 if HF_TOKEN is None:
     raise ValueError("HF_TOKEN environment variable is required")

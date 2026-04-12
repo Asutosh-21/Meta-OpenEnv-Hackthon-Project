@@ -14,12 +14,10 @@ from openai import OpenAI
 
 
 def load_config(path: str) -> dict:
-    base_dir = os.path.abspath(os.getcwd())
-    safe_path = os.path.abspath(os.path.join(base_dir, path))
-    if not safe_path.startswith(base_dir):
-        raise ValueError("Config path outside allowed directory")
-    if not safe_path.endswith(".json"):
+    filename = os.path.basename(path)
+    if not filename.endswith(".json"):
         raise ValueError("Config must be a .json file")
+    safe_path = os.path.join(os.path.abspath(os.getcwd()), filename)
     with open(safe_path) as f:
         return json.load(f)
 

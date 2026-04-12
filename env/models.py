@@ -16,14 +16,14 @@ class Observation(BaseModel):
 
 
 class Action(BaseModel):
-    action_type: str          # classify | investigate | remediate | verify | postmortem
-    severity: Optional[str] = None        # P1 | P2 | P3 | P4
+    action_type: str = "classify"  # classify | investigate | remediate | verify | postmortem
+    severity: Optional[str] = None
     affected_service: Optional[str] = None
     root_cause: Optional[str] = None
     explanation: Optional[str] = None
     remediation_steps: Optional[List[str]] = None
     postmortem: Optional[str] = None
-    raw_text: Optional[str] = None        # fallback free-text action
+    raw_text: Optional[str] = None
 
 
 class Reward(BaseModel):
