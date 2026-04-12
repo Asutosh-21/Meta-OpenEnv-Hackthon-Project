@@ -5,7 +5,7 @@ SEVERITY_MAP = {"P1": 4, "P2": 3, "P3": 2, "P4": 1}
 
 def _clamp(score: float) -> float:
     """Clamp score to strictly (0, 1) — never exactly 0.0 or 1.0."""
-    return round(min(max(score, 0.1), 0.9), 4)
+    return round(min(max(score, 0.15), 0.85), 4)
 
 
 def _severity_score(predicted: str, actual: str) -> float:

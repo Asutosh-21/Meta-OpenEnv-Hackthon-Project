@@ -42,7 +42,7 @@ def log_end(success, steps, rewards):
 
 
 def clamp(v):
-    return round(min(max(float(v), 0.1), 0.9), 4)
+    return round(min(max(float(v), 0.15), 0.85), 4)
 
 
 SYSTEM_PROMPT = textwrap.dedent("""

@@ -100,7 +100,7 @@ def reset(req: ResetRequest = None):
     env = IncidentResponseEnv(task_type=task_type, seed=req.seed)
     _envs[task_type] = env
     obs = env.reset()
-    return JSONResponse(content={"observation": obs.model_dump(), "done": False, "reward": 0.1, "info": {}})
+    return JSONResponse(content={"observation": obs.model_dump(), "done": False, "reward": 0.15, "info": {}})
 
 
 @app.post("/step")
@@ -115,7 +115,7 @@ def step(req: StepRequest):
         raise HTTPException(status_code=400, detail=str(e))
     return JSONResponse(content={
         "observation": result.observation.model_dump(),
-        "reward": round(min(max(result.reward, 0.1), 0.9), 4),
+        "reward": round(min(max(result.reward, 0.15), 0.85), 4),
         "done": result.done,
         "info": result.info,
     })
