@@ -12,7 +12,7 @@ tags:
   - incident-response
 ---
 
-# OpenEnv — Incident Response & DevOps Alert Triage
+# OpenEnv — Incident Response v1.1
 
 An OpenEnv-compliant reinforcement learning environment that simulates real-world DevOps/SRE incident response. An AI agent receives production alerts, logs, and metrics, then must triage, investigate, remediate, and document incidents — exactly as an on-call engineer would.
 
